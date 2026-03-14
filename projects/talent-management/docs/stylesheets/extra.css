@@ -1,0 +1,67 @@
+/* Project Reporter — Custom Admonitions */
+
+/* BTP Insight — SAP-branded blue */
+:root {
+  --md-admonition-icon--btp-insight: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>');
+}
+
+.md-typeset .admonition.btp-insight,
+.md-typeset details.btp-insight {
+  border-color: #0070f2;
+}
+
+.md-typeset .btp-insight > .admonition-title,
+.md-typeset .btp-insight > summary {
+  background-color: rgba(0, 112, 242, 0.1);
+}
+
+.md-typeset .btp-insight > .admonition-title::before,
+.md-typeset .btp-insight > summary::before {
+  background-color: #0070f2;
+  -webkit-mask-image: var(--md-admonition-icon--btp-insight);
+  mask-image: var(--md-admonition-icon--btp-insight);
+}
+
+/* Key Pattern — amber/orange */
+:root {
+  --md-admonition-icon--key-pattern: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>');
+}
+
+.md-typeset .admonition.key-pattern,
+.md-typeset details.key-pattern {
+  border-color: #e67700;
+}
+
+.md-typeset .key-pattern > .admonition-title,
+.md-typeset .key-pattern > summary {
+  background-color: rgba(230, 119, 0, 0.1);
+}
+
+.md-typeset .key-pattern > .admonition-title::before,
+.md-typeset .key-pattern > summary::before {
+  background-color: #e67700;
+  -webkit-mask-image: var(--md-admonition-icon--key-pattern);
+  mask-image: var(--md-admonition-icon--key-pattern);
+}
+
+/* Extension Idea — green */
+:root {
+  --md-admonition-icon--extension-idea: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>');
+}
+
+.md-typeset .admonition.extension-idea,
+.md-typeset details.extension-idea {
+  border-color: #2e7d32;
+}
+
+.md-typeset .extension-idea > .admonition-title,
+.md-typeset .extension-idea > summary {
+  background-color: rgba(46, 125, 50, 0.1);
+}
+
+.md-typeset .extension-idea > .admonition-title::before,
+.md-typeset .extension-idea > summary::before {
+  background-color: #2e7d32;
+  -webkit-mask-image: var(--md-admonition-icon--extension-idea);
+  mask-image: var(--md-admonition-icon--extension-idea);
+}

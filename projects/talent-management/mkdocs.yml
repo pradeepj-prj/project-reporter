@@ -1,0 +1,74 @@
+site_name: "Talent Management Demo"
+site_description: "End-to-end talent management system — architecture, data model, APIs, dashboards, and deployment on SAP BTP"
+site_url: ""
+
+theme:
+  name: material
+  palette:
+    scheme: default
+    primary: indigo
+    accent: teal
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - content.tabs.link
+    - toc.integrate
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.critic
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - awesome-pages
+
+nav:
+  - Overview: index.md
+  - Architecture:
+    - System Architecture: architecture/index.md
+    - Component Inventory: architecture/component-inventory.md
+  - Data Model:
+    - Database Design: data-model/index.md
+    - TM Schema: data-model/tm-schema.md
+  - Data Generation:
+    - Generation Pipeline: data-generation/index.md
+    - Attrition Model: data-generation/attrition-model.md
+  - Business Queries: business-queries/index.md
+  - MCP Integration:
+    - MCP Server & Joule: mcp-integration/index.md
+    - Audit Dashboard: mcp-integration/audit-dashboard.md
+  - Dashboards:
+    - HR Analytics: dashboards/hr-analytics.md
+    - MCP Audit: dashboards/mcp-audit.md
+    - SAPUI5 Enterprise: dashboards/sapui5-enterprise.md
+  - Deployment: deployment/index.md
+  - Security: security/index.md
+  - Learnings: learnings/index.md

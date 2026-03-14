@@ -1,0 +1,29 @@
+# Discord bot configuration
+# Bot token should be set via DISCORD_BOT_TOKEN environment variable
+
+bot:
+  command_prefix: "!"
+
+posting:
+  # Post a knowledge card every N hours
+  interval_hours: 4
+  # Quiet hours (no posts during these UTC hours)
+  quiet_hours_start: 22
+  quiet_hours_end: 7
+
+channels:
+  # Map project names to Discord channel IDs
+  # talent-management: "1234567890"
+
+threads:
+  # Max exchanges before summarizing older messages
+  max_exchanges: 30
+  # Keep last N messages verbatim when summarizing
+  keep_recent: 5
+  # Target token count for summary of older messages
+  summary_tokens: 500
+
+reactions:
+  # Emoji meanings
+  got_it: "\U0001F44D"       # 👍
+  explain_more: "\u2753"     # ❓

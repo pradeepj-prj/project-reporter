@@ -1,0 +1,30 @@
+site_name: "Project Reporter"
+site_description: "Multi-project documentation hub — architectural deep-dives, data models, and deployment guides"
+site_url: ""
+
+theme:
+  name: material
+  palette:
+    scheme: default
+    primary: indigo
+    accent: teal
+  features:
+    - navigation.tabs
+    - navigation.top
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - tables
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md

@@ -1,0 +1,50 @@
+projects:
+  talent-management:
+    name: Talent Management Demo
+    description: >
+      End-to-end talent management system with synthetic HR data generation,
+      FastAPI backend, MCP server integration with SAP Joule, and multiple
+      analytics dashboards — deployed on SAP BTP Cloud Foundry.
+    repos:
+      - path: ~/HR-Data-Generator
+        role: data-generation
+        description: Python library generating synthetic SuccessFactors-style HR datasets
+
+      - path: ~/talent-management-app
+        role: backend-api
+        description: FastAPI REST API for 12+ business questions + attrition prediction
+
+      - path: ~/hr-data-dashboard
+        role: dashboard
+        description: Streamlit interactive analytics dashboard
+
+      - path: ~/mcp-audit-dashboard
+        role: dashboard
+        description: React dashboard monitoring MCP tool invocations
+
+      - path: ~/sap-ui5-tm-mcp
+        role: dashboard
+        description: SAPUI5 enterprise dashboard for talent management
+
+      - path: ~/tm-mcp-server
+        role: mcp-server
+        description: MCP server v1 for SAP Joule integration
+
+      - path: ~/tm-mcp-server-v2
+        role: mcp-server
+        description: MCP server v2 with enhanced tool definitions
+
+      - path: ~/talent_mangement_demo_report
+        role: documentation
+        description: Technical report covering architecture, design, and deployment
+
+    report_source: ~/talent_mangement_demo_report
+    site_path: projects/talent-management
+    tags:
+      - sap-btp
+      - fastapi
+      - postgresql
+      - mcp
+      - streamlit
+      - sapui5
+      - cloud-foundry

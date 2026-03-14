@@ -1,0 +1,4 @@
+# Build-time dependencies only (Netlify doesn't read pyproject.toml)
+mkdocs-material>=9.5
+mkdocs-awesome-pages-plugin>=2.9
+pyyaml>=6.0
