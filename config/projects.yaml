@@ -48,3 +48,25 @@ projects:
       - streamlit
       - sapui5
       - cloud-foundry
+
+  project-reporter:
+    name: Project Reporter
+    description: >
+      Meta-documentation system that ingests project repositories, generates
+      architectural documentation via Claude, builds MkDocs sites, and delivers
+      bite-sized knowledge cards through a Discord bot with interactive Q&A.
+    repos:
+      - path: ~/project_reporter
+        role: meta-documentation-system
+        description: >
+          Full pipeline: code extractors analyze repos, Claude generates articles,
+          MkDocs sites are built, and a Discord bot posts knowledge cards on schedule
+          with deep analysis and interactive thread-based Q&A.
+    site_path: projects/project-reporter
+    tags:
+      - python
+      - discord
+      - claude-api
+      - mkdocs
+      - sqlite
+      - meta-documentation

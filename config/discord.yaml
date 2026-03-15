@@ -6,14 +6,12 @@ bot:
 
 posting:
   # Post a knowledge card every N hours
-  interval_hours: 4
-  # Quiet hours (no posts during these UTC hours)
-  quiet_hours_start: 22
-  quiet_hours_end: 7
+  interval_hours: 1
 
 channels:
   # Map project names to Discord channel IDs
-  # talent-management: "1234567890"
+  talent-management: "1482338569954791486"
+  project-reporter: "1482614810729386035"
 
 threads:
   # Max exchanges before summarizing older messages

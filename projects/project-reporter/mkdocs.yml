@@ -1,0 +1,42 @@
+site_name: Project Reporter
+theme:
+  name: material
+  palette:
+    scheme: default
+    primary: indigo
+    accent: teal
+  features:
+  - navigation.tabs
+  - navigation.sections
+  - navigation.expand
+  - navigation.top
+  - content.code.copy
+  - content.tabs.link
+  - toc.integrate
+markdown_extensions:
+- admonition
+- pymdownx.details
+- pymdownx.superfences:
+    custom_fences:
+    - name: mermaid
+      class: mermaid
+      format: '!!python/name:pymdownx.superfences.fence_code_format'
+- pymdownx.tabbed:
+    alternate_style: true
+- pymdownx.highlight:
+    anchor_linenums: true
+- pymdownx.inlinehilite
+- attr_list
+- md_in_html
+- tables
+- toc:
+    permalink: true
+plugins:
+- search
+nav:
+- Overview: index.md
+- Architecture: architecture/index.md
+- Data Model: data-model/index.md
+- Api: business-queries/index.md
+- Deployment: deployment/index.md
+- Btp Insights: btp-insights/index.md
