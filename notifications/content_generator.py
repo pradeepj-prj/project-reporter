@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +11,8 @@ import anthropic
 from .card_store import CardStore
 
 BUILD_DIR = Path(__file__).resolve().parent.parent / "build"
+DEEP_ANALYSIS_DIR = Path(__file__).resolve().parent.parent / "data" / "deep_analysis"
+MAX_DEEP_ANALYSIS_ROUNDS = 3
 
 
 class ContentGenerator:
@@ -37,7 +40,7 @@ class ContentGenerator:
         Each card has: title, summary (2-3 sentences), insight, tags.
         """
         response = self.client.messages.create(
-            model="claude-haiku-4-5-20251001",
+            model="claude-sonnet-4-6",
             max_tokens=2048,
             system=(
                 "You generate concise knowledge cards from technical documentation. "
@@ -60,8 +63,13 @@ class ContentGenerator:
         )
 
         try:
-            cards = json.loads(response.content[0].text)
-        except json.JSONDecodeError:
+            text = response.content[0].text.strip()
+            # Strip markdown fences if present
+            if text.startswith("```"):
+                text = text.split("\n", 1)[1]  # remove opening fence line
+                text = text.rsplit("```", 1)[0]  # remove closing fence
+            cards = json.loads(text.strip())
+        except (json.JSONDecodeError, IndexError):
             return []
 
         return cards
@@ -93,3 +101,171 @@ class ContentGenerator:
 
         print(f"  Generated {total} cards")
         return total
+
+    # --- Deep Analysis ---
+
+    def _load_project_docs(self, project: str) -> str:
+        """Load all documentation pages for a project as a single string."""
+        index = self.load_content_index()
+        pages = [p for p in index if p["project"] == project]
+        parts = []
+        for page in pages:
+            parts.append(f"# {page['title']}\n\n{page['content']}")
+        return "\n\n---\n\n".join(parts)
+
+    def _load_previous_analyses(self, project: str) -> list[str]:
+        """Load previous deep analysis docs from disk."""
+        docs = []
+        records = self.store.get_deep_analysis_docs(project)
+        for record in records:
+            doc_path = Path(record["doc_path"])
+            if doc_path.exists():
+                docs.append(doc_path.read_text(encoding="utf-8"))
+        return docs
+
+    def generate_deep_analysis(self, project: str, round_num: int) -> str:
+        """Generate a deep analysis document using Opus.
+
+        Reads all project docs + previous analysis docs and writes a new
+        analysis to data/deep_analysis/{project}_round{N}.md.
+
+        Returns the analysis text.
+        """
+        project_docs = self._load_project_docs(project)
+        previous_docs = self._load_previous_analyses(project)
+
+        previous_context = ""
+        if previous_docs:
+            previous_context = (
+                "\n\n=== PREVIOUS ANALYSIS ROUNDS ===\n\n"
+                + "\n\n---\n\n".join(previous_docs)
+                + "\n\n=== END PREVIOUS ANALYSES ===\n\n"
+                "IMPORTANT: Build on the above analyses but do NOT repeat insights "
+                "already covered. Explore new angles, connections, and deeper implications.\n\n"
+            )
+
+        prompt = (
+            f"You are analyzing the '{project}' project (round {round_num} of {MAX_DEEP_ANALYSIS_ROUNDS}).\n\n"
+            f"PROJECT DOCUMENTATION:\n{project_docs[:80000]}\n\n"
+            f"{previous_context}"
+            f"Write a deep analysis document that explores architectural patterns, "
+            f"design trade-offs, cross-component interactions, SAP BTP extension opportunities, "
+            f"and non-obvious insights that go beyond what's in the docs.\n\n"
+            f"Structure the document with ## headings for each major insight area "
+            f"(4-6 sections). Each section should be 2-4 paragraphs.\n\n"
+            f"{'Focus on foundational architecture and key design decisions.' if round_num == 1 else ''}"
+            f"{'Explore edge cases, scalability concerns, and integration patterns.' if round_num == 2 else ''}"
+            f"{'Synthesize everything — strategic recommendations, gaps, and future directions.' if round_num == 3 else ''}"
+        )
+
+        response = self.client.messages.create(
+            model="claude-opus-4-6",
+            max_tokens=4096,
+            system=(
+                "You are a senior solution architect writing deep technical analysis. "
+                "Target audience: solution engineers with data science background. "
+                "Be specific, insightful, and opinionated. Reference concrete components and patterns."
+            ),
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        analysis_text = response.content[0].text
+
+        # Save to disk
+        DEEP_ANALYSIS_DIR.mkdir(parents=True, exist_ok=True)
+        doc_path = DEEP_ANALYSIS_DIR / f"{project}_round{round_num}.md"
+        doc_path.write_text(analysis_text, encoding="utf-8")
+
+        print(f"  Deep analysis round {round_num} saved to {doc_path}")
+        return analysis_text
+
+    def generate_deep_analysis_cards(self, project: str, analysis_doc: str, round_num: int) -> int:
+        """Generate insight cards from a deep analysis document using Haiku.
+
+        Splits the analysis by ## headings and generates 2-4 cards per section.
+        Cards are stored with card_type='insight'.
+
+        Returns number of cards generated.
+        """
+        # Split by ## headings
+        sections = re.split(r'\n(?=## )', analysis_doc)
+        sections = [s.strip() for s in sections if s.strip() and "##" in s]
+
+        total = 0
+        for section in sections:
+            # Extract section title
+            lines = section.split("\n", 1)
+            section_title = lines[0].lstrip("# ").strip()
+            section_content = lines[1] if len(lines) > 1 else ""
+
+            response = self.client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=2048,
+                system=(
+                    "You generate concise insight cards from deep technical analysis. "
+                    "Each card should be a standalone insight that reveals something non-obvious. "
+                    "Target audience: solution engineers with data science background. "
+                    "These are 'deep analysis' insights, not basic facts."
+                ),
+                messages=[{
+                    "role": "user",
+                    "content": (
+                        f"Generate 2-4 insight cards from this analysis section.\n\n"
+                        f"Section: {section_title}\n"
+                        f"Project: {project}\n"
+                        f"Analysis Round: {round_num}\n\n"
+                        f"Content:\n{section_content[:6000]}\n\n"
+                        f"Return a JSON array of objects with keys: "
+                        f"title, summary (2-3 sentences of deep insight), "
+                        f"insight (one key non-obvious takeaway), "
+                        f"tags (array of 2-3 tech terms).\n"
+                        f"Return ONLY the JSON array, no markdown fences."
+                    ),
+                }],
+            )
+
+            try:
+                text = response.content[0].text.strip()
+                if text.startswith("```"):
+                    text = text.split("\n", 1)[1]
+                    text = text.rsplit("```", 1)[0]
+                cards = json.loads(text.strip())
+            except (json.JSONDecodeError, IndexError):
+                continue
+
+            for card in cards:
+                self.store.add_card(
+                    project=project,
+                    title=card.get("title", section_title),
+                    summary=card.get("summary", ""),
+                    insight=card.get("insight", ""),
+                    tags=card.get("tags", []),
+                    source_path=f"deep_analysis/{project}_round{round_num}.md",
+                    card_type="insight",
+                )
+                total += 1
+
+        print(f"  Generated {total} insight cards from round {round_num} analysis")
+        return total
+
+    def run_deep_analysis(self, project: str) -> tuple[int, int]:
+        """Run one round of deep analysis: generate doc + cards.
+
+        Returns (round_num, cards_generated). Returns (0, 0) if max rounds reached.
+        """
+        current_round = self.store.get_deep_analysis_round(project)
+        next_round = current_round + 1
+
+        if next_round > MAX_DEEP_ANALYSIS_ROUNDS:
+            print(f"  Project '{project}' has completed all {MAX_DEEP_ANALYSIS_ROUNDS} deep analysis rounds.")
+            return (0, 0)
+
+        print(f"  Starting deep analysis round {next_round}/{MAX_DEEP_ANALYSIS_ROUNDS} for '{project}'...")
+
+        analysis_text = self.generate_deep_analysis(project, next_round)
+        cards_count = self.generate_deep_analysis_cards(project, analysis_text, next_round)
+
+        doc_path = str(DEEP_ANALYSIS_DIR / f"{project}_round{next_round}.md")
+        self.store.record_deep_analysis(project, next_round, doc_path, cards_count)
+
+        return (next_round, cards_count)

@@ -29,7 +29,8 @@ class CardStore:
                     tags TEXT,  -- JSON array
                     source_path TEXT,
                     source_url TEXT,
-                    created_at TEXT NOT NULL
+                    created_at TEXT NOT NULL,
+                    card_type TEXT NOT NULL DEFAULT 'factual'
                 );
                 CREATE TABLE IF NOT EXISTS post_history (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,9 +39,27 @@ class CardStore:
                     message_id TEXT,
                     posted_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS deep_analysis (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    project TEXT NOT NULL,
+                    round INTEGER NOT NULL,
+                    generated_at TEXT NOT NULL,
+                    doc_path TEXT NOT NULL,
+                    cards_generated INTEGER NOT NULL DEFAULT 0
+                );
                 CREATE INDEX IF NOT EXISTS idx_cards_project ON cards(project);
                 CREATE INDEX IF NOT EXISTS idx_history_channel ON post_history(channel_id);
+                CREATE INDEX IF NOT EXISTS idx_deep_analysis_project ON deep_analysis(project);
             """)
+            # Migrate existing cards table if card_type column is missing
+            cols = [
+                row[1]
+                for row in conn.execute("PRAGMA table_info(cards)").fetchall()
+            ]
+            if "card_type" not in cols:
+                conn.execute(
+                    "ALTER TABLE cards ADD COLUMN card_type TEXT NOT NULL DEFAULT 'factual'"
+                )
 
     def _conn(self) -> sqlite3.Connection:
         return sqlite3.connect(str(self.db_path))
@@ -54,14 +73,15 @@ class CardStore:
         tags: list[str] | None = None,
         source_path: str = "",
         source_url: str = "",
+        card_type: str = "factual",
     ) -> int:
         """Store a new knowledge card. Returns the card ID."""
         now = datetime.now(timezone.utc).isoformat()
         with self._conn() as conn:
             cur = conn.execute(
-                """INSERT INTO cards (project, title, summary, insight, tags, source_path, source_url, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (project, title, summary, insight, json.dumps(tags or []), source_path, source_url, now),
+                """INSERT INTO cards (project, title, summary, insight, tags, source_path, source_url, created_at, card_type)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (project, title, summary, insight, json.dumps(tags or []), source_path, source_url, now, card_type),
             )
             return cur.lastrowid  # type: ignore[return-value]
 
@@ -96,3 +116,48 @@ class CardStore:
             conn.row_factory = sqlite3.Row
             row = conn.execute("SELECT * FROM cards WHERE id = ?", (card_id,)).fetchone()
             return dict(row) if row else None
+
+    def has_unposted_cards_for_project(self, project: str, channel_id: str) -> bool:
+        """Check if there are any unposted cards for a project in a channel."""
+        with self._conn() as conn:
+            row = conn.execute(
+                """SELECT COUNT(*) FROM cards c
+                   WHERE c.project = ?
+                     AND c.id NOT IN (
+                         SELECT card_id FROM post_history WHERE channel_id = ?
+                     )""",
+                (project, channel_id),
+            ).fetchone()
+            return (row[0] if row else 0) > 0
+
+    def get_deep_analysis_round(self, project: str) -> int:
+        """Return the current deep analysis round for a project (0 if none)."""
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT MAX(round) FROM deep_analysis WHERE project = ?",
+                (project,),
+            ).fetchone()
+            return row[0] if row and row[0] is not None else 0
+
+    def record_deep_analysis(
+        self, project: str, round_num: int, doc_path: str, cards_generated: int
+    ) -> int:
+        """Record a completed deep analysis round. Returns the record ID."""
+        now = datetime.now(timezone.utc).isoformat()
+        with self._conn() as conn:
+            cur = conn.execute(
+                """INSERT INTO deep_analysis (project, round, generated_at, doc_path, cards_generated)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (project, round_num, now, doc_path, cards_generated),
+            )
+            return cur.lastrowid  # type: ignore[return-value]
+
+    def get_deep_analysis_docs(self, project: str) -> list[dict[str, Any]]:
+        """Get all deep analysis records for a project, ordered by round."""
+        with self._conn() as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM deep_analysis WHERE project = ? ORDER BY round",
+                (project,),
+            ).fetchall()
+            return [dict(row) for row in rows]

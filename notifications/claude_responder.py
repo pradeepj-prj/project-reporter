@@ -75,7 +75,7 @@ class ClaudeResponder:
             return self._keyword_search(query, pages, top_k)
 
         vo = voyageai.Client()
-        query_emb = vo.embed([query], model="voyage-3-lite").embeddings[0]
+        query_emb = vo.embed([query], model="voyage-3").embeddings[0]
         query_vec = np.array(query_emb)
 
         assert self._embeddings is not None
@@ -139,7 +139,7 @@ class ClaudeResponder:
         messages.append({"role": "user", "content": question})
 
         response = self.client.messages.create(
-            model="claude-haiku-4-5-20251001",
+            model="claude-sonnet-4-6",
             max_tokens=1024,
             system=(
                 f"You are a helpful assistant answering questions about technical projects. "
