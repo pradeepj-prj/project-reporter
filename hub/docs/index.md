@@ -16,6 +16,16 @@ A documentation hub for AI-assisted POC projects — architectural deep-dives, d
 
     [:octicons-arrow-right-24: Explore documentation](../talent-management/index.html)
 
+-   :material-file-document-multiple:{ .lg .middle } **Project Reporter**
+
+    ---
+
+    Meta-documentation system that ingests project repositories, generates architectural documentation via Claude, builds MkDocs sites, and delivers bite-sized knowledge cards through a Discord bot with interactive Q&A.
+
+    **1 repository** · Python · Claude API · Discord · MkDocs · SQLite
+
+    [:octicons-arrow-right-24: Explore documentation](../project-reporter/index.html)
+
 </div>
 
 ---
